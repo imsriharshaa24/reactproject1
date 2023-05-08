@@ -1,0 +1,82 @@
+Create a button that once clicked creates a phone verification popup with the option to enter 6 digits in different inputs as an OTP.
+
+import React, { useState, useRef, useEffect } from 'react';
+
+function PhoneVerification() {
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const inputsRef = [useRef(null), useRef(null), useRef(null), useRef(null), useRef(null), useRef(null)];
+
+  function handleInput(e, index) {
+    const { value } = e.target;
+    if (/\D/g.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+
+    if (value !== '') {
+      if (index === otp.length - 1) {
+        inputsRef[index].current.blur();
+      } else {
+        inputsRef[index + 1].current.focus();
+      }
+    } else if (index !== 0) {
+      inputsRef[index - 1].current.focus();
+    }
+  }
+
+  function handlePaste(e) {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text/plain').slice(0, 6);
+    const newOtp = [...otp];
+    for (let i = 0; i < pasteData.length; i++) {
+      newOtp[i] = pasteData[i];
+    }
+    setOtp(newOtp);
+  }
+
+  useEffect(() => {
+    function handleArrowKeys(e, index) {
+      if (e.key === 'ArrowLeft' && index !== 0) {
+        inputsRef[index - 1].current.focus();
+      } else if (e.key === 'ArrowRight' && index !== otp.length - 1) {
+        inputsRef[index + 1].current.focus();
+      }
+    }
+
+    inputsRef.forEach((input, index) => {
+      input.current.addEventListener('keydown', (e) => {
+        handleArrowKeys(e, index);
+      });
+    });
+
+    return () => {
+      inputsRef.forEach((input, index) => {
+        input.current.removeEventListener('keydown', (e) => {
+          handleArrowKeys(e, index);
+        });
+      });
+    };
+  }, [otp]);
+
+  return (
+    <div>
+      <button onClick={() => console.log('Verify phone number clicked!')}>Verify Phone Number</button>
+      <div>
+        {otp.map((digit, index) => (
+          <input
+            key={index}
+            type="text"
+            pattern="\d*"
+            maxLength={1}
+            value={digit}
+            ref={inputsRef[index]}
+            onChange={(e) => handleInput(e, index)}
+            onPaste={handlePaste}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default PhoneVerification;
